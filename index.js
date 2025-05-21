@@ -631,7 +631,7 @@ async function executeBackupLogic_Core(settings, backupType = BACKUP_TYPE.STANDA
         // 根据是否需要轮询来获取数据
         if (forceSave) {
             // 强制保存时进行轮询
-            const MAX_POLL_ATTEMPTS = 2;
+            const MAX_POLL_ATTEMPTS = 3;
             const POLL_INTERVAL_MS = 350;
             let pollAttempts = 0;
             let serverChatContentArray = null;
