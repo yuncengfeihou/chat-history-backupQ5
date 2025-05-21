@@ -254,7 +254,7 @@ const DEFAULT_SETTINGS = {
 };
 
 // IndexedDB 数据库名称和版本
-const DB_NAME = 'ST_ChatAutoBackupY3';
+const DB_NAME = 'ST_ChatAutoBackupQ5';
 const DB_VERSION = 1;
 const STORE_NAME = 'backups';
 
