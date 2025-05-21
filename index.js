@@ -250,11 +250,11 @@ const DEFAULT_SETTINGS = {
     maxEntityCount: 3,        // 最多保存几个不同角色/群组的备份 (新增)
     maxBackupsPerEntity: 3,   // 每个角色/群组最多保存几个备份 (新增)
     backupDebounceDelay: 1500, // 防抖延迟时间 (毫秒)
-    debug: flase, // 调试模式
+    debug: true, // 调试模式
 };
 
 // IndexedDB 数据库名称和版本
-const DB_NAME = 'ST_ChatAutoBackupQ5';
+const DB_NAME = 'ST_ChatAutoBackupY3';
 const DB_VERSION = 1;
 const STORE_NAME = 'backups';
 
@@ -631,7 +631,7 @@ async function executeBackupLogic_Core(settings, backupType = BACKUP_TYPE.STANDA
         // 根据是否需要轮询来获取数据
         if (forceSave) {
             // 强制保存时进行轮询
-            const MAX_POLL_ATTEMPTS = 3;
+            const MAX_POLL_ATTEMPTS = 2;
             const POLL_INTERVAL_MS = 350;
             let pollAttempts = 0;
             let serverChatContentArray = null;
@@ -1992,6 +1992,7 @@ jQuery(async () => {
             
             setupUIEvents();
             setupBackupEvents();
+            setupKeyboardShortcuts(); // 添加这一行来设置快捷键
             
             await initializeUIState();
             
@@ -2145,4 +2146,84 @@ function setupTableDrawerObserver() {
     
     // 开始首次尝试
     return attemptToSetupObserver();
+}
+
+// --- 添加快捷键恢复功能 ---
+function setupKeyboardShortcuts() {
+    // 跟踪按键状态
+    const keysPressed = {
+        'KeyA': false,
+        'KeyS': false,
+        'KeyD': false
+    };
+    
+    // 键盘按下事件
+    document.addEventListener('keydown', (event) => {
+        // 如果正在输入框中，不触发快捷键
+        if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
+            return;
+        }
+        
+        // 更新按键状态
+        if (event.code in keysPressed) {
+            keysPressed[event.code] = true;
+        }
+        
+        // 检查是否所有必需的键都被按下
+        if (keysPressed['KeyA'] && keysPressed['KeyS'] && keysPressed['KeyD']) {
+            // 重置按键状态，防止重复触发
+            keysPressed['KeyA'] = keysPressed['KeyS'] = keysPressed['KeyD'] = false;
+            
+            // 恢复最新备份
+            restoreLatestBackup();
+        }
+    });
+    
+    // 键盘释放事件
+    document.addEventListener('keyup', (event) => {
+        // 更新按键状态
+        if (event.code in keysPressed) {
+            keysPressed[event.code] = false;
+        }
+    });
+    
+    // 页面失去焦点时重置所有按键状态
+    window.addEventListener('blur', () => {
+        Object.keys(keysPressed).forEach(key => {
+            keysPressed[key] = false;
+        });
+    });
+    
+    logDebug('[聊天自动备份] 快捷键监听已设置 (A+S+D 同时按下可恢复最新备份)');
+}
+
+// 恢复最新备份的函数
+async function restoreLatestBackup() {
+    logDebug('[聊天自动备份] 通过快捷键尝试恢复最新备份');
+    
+    try {
+        // 获取所有备份
+        const allBackups = await getAllBackups();
+        if (!allBackups || allBackups.length === 0) {
+            toastr.warning('没有可用的备份', '快捷恢复');
+            return;
+        }
+        
+        // 按时间戳排序（降序，最新的在前）
+        allBackups.sort((a, b) => b.timestamp - a.timestamp);
+        
+        // 获取最新的备份
+        const latestBackup = allBackups[0];
+        
+        // 显示即将恢复的通知
+        toastr.info(`正在恢复 "${latestBackup.entityName} - ${latestBackup.chatName}" 的最新备份...`, '快捷恢复');
+        
+        // 直接调用恢复功能，跳过确认对话框
+        await restoreBackup(latestBackup);
+        
+        // 恢复成功通知已在restoreBackup函数中显示
+    } catch (error) {
+        console.error('[聊天自动备份] 快捷恢复最新备份时出错:', error);
+        toastr.error(`恢复失败: ${error.message}`, '快捷恢复');
+    }
 }
