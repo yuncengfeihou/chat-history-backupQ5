@@ -250,11 +250,11 @@ const DEFAULT_SETTINGS = {
     maxEntityCount: 3,        // 最多保存几个不同角色/群组的备份 (新增)
     maxBackupsPerEntity: 3,   // 每个角色/群组最多保存几个备份 (新增)
     backupDebounceDelay: 1500, // 防抖延迟时间 (毫秒)
-    debug: true, // 调试模式
+    debug: flase, // 调试模式
 };
 
 // IndexedDB 数据库名称和版本
-const DB_NAME = 'ST_ChatAutoBackupY3';
+const DB_NAME = 'ST_ChatAutoBackupQ5';
 const DB_VERSION = 1;
 const STORE_NAME = 'backups';
 
